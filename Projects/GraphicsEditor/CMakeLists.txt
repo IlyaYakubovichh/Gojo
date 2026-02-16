@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 4.2.1)
 set(LocalRoot ${CMAKE_CURRENT_SOURCE_DIR})
+
+# GraphicsEditor
 project(GraphicsEditor)
 
 # Files
@@ -15,7 +17,7 @@ target_include_directories(GraphicsEditor PRIVATE ${LocalRoot}
 												  ${LocalRoot}/Source
 )
 
-# Copy GojoEngine dll to GraphicsEngine.exe dir
+# Copy GojoEngine dll to GraphicsEditor.exe dir
 add_custom_command(TARGET GraphicsEditor 
 	POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:GraphicsEditor> $<TARGET_RUNTIME_DLLS:GraphicsEditor>

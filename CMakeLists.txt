@@ -1,12 +1,28 @@
 cmake_minimum_required(VERSION 4.2.1)
 
+# Options
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
 
+# Main project
 project(Gojo)
 
-include(GNUInstallDirs)
+# Propagate functionality
+function(GojoSensei Target FolderName)
+	if(TARGET ${Target})
+		set_target_properties(${Target} PROPERTIES FOLDER ${FolderName})
+	endif()
+endfunction()
 
-add_subdirectory(GojoEngine)
-add_subdirectory(Projects)
+# GojoEngine and related projects
+include(GNUInstallDirs) 		# makes available install variables
+add_subdirectory(GojoEngine)	# builds GojoEngine
+add_subdirectory(Projects)		# builds all projects that use GojoEngine
+
+# Install
+install(TARGETS GojoEngine 
+				GraphicsEditor 
+		DESTINATION 
+				${CMAKE_INSTALL_BINDIR}
+)
