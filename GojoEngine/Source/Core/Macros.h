@@ -50,13 +50,14 @@ using f64 = double;
 // ================================================================================
 using b8 = bool;
 
-#define TRUE 1
-#define FALSE 0
-
 // ================================================================================
 // Static Assertions
 // ================================================================================
-#define GOJO_STATIC_ASSERT static_assert
+#define GOJO_STATIC_ASSERT(expr, message) \
+    static_assert(expr, "Static assert failed: " message)
+
+#define GOJO_RUNTIME_ASSERT(expr, message) \
+	assert((expr) && (message))
 
 // Ensure correct size on different platforms
 GOJO_STATIC_ASSERT(sizeof(u8) == 1, "u8 expected to be 1 byte.");
@@ -77,6 +78,7 @@ GOJO_STATIC_ASSERT(sizeof(b8) == 1, "b8 expected to be 1 byte.");
 // Assertions
 // ================================================================================
 #define GojoDebugBreak() __debugbreak()
+
 
 #ifdef GOJO_ASSERTIONS_ENABLED
 	// Define Assertions

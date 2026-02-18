@@ -1,20 +1,27 @@
 #include "Core/Engine.h"
+#include "Managers/LogManager/LogManager.h"
+#include "Managers/WindowManager/WindowManager.h"
 
 namespace GojoEngine
 {
-	LogManager* Engine::sLogManager = nullptr;
-
 	void Engine::StartUp()
 	{
-		// Log manager
-		sLogManager = new LogManager();
-		sLogManager->StartUp();
+		LogManager::StartUp();		GOJO_LOG_INFO("LogManager", "LogManager StartUp complete!");
+		WindowManager::StartUp();	GOJO_LOG_INFO("WindowManager", "WindowManager StartUp complete!");
+	}
+
+	void Engine::Run()
+	{
+		auto& windowManager = WindowManager::GetInstance();
+		while (!windowManager.AreAllWindowsClosed())
+		{
+			windowManager.OnUpdate();
+		}
 	}
 
 	void Engine::ShutDown()
 	{
-		// Log manager
-		sLogManager->ShutDown();
-		delete sLogManager;
+		WindowManager::ShutDown();
+		LogManager::ShutDown();
 	}
 }

@@ -1,12 +1,16 @@
 #pragma once
 
 #include "Core/Macros.h"
+#include "Managers/Manager.h"
 
 #include <string>
 #include <string_view>
 #include <memory>
 #include <format>
 #include <concepts>
+
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 // ================================================================================
 // Log Configuration
@@ -32,37 +36,38 @@ namespace GojoEngine
 {
 	enum class LogLevel : u8
 	{
-		NoLogging = 0,
-		Trace,
-		Info,
+		Trace, 
+		Info, 
 		Debug,
-		Warning,
-		Error,
-		Fatal // will call GojoDebugBreak()
+		Warning, 
+		Error, 
+		Fatal, 
+		Off
 	};
 
-	class GOJO_API LogManager
+	class GOJO_API LogManager final : public Manager<LogManager>
 	{
+		friend class Manager<LogManager>;
+
 	public:
-		LogManager();
-		~LogManager();
+		void LogMessage(std::string_view categoryName, LogLevel level, std::string_view message) const;
 
-		void StartUp();
-		void ShutDown();
-
-		void LogMessage(std::string_view categoryName, LogLevel logLevel, std::string_view message) const;
+	private:
+		LogManager();  
+		~LogManager(); 
 
 	private:
 		class Impl;
 		std::unique_ptr<Impl> pImpl;
 	};
 
-	constexpr LogLevel minLogLevel = LogLevel::Trace;
-	constexpr LogLevel maxLogLevel = LogLevel::Fatal;
-
 	// Concepts
 	template<typename T>
 	concept LoggableMessage = std::convertible_to<T, std::string_view> || std::convertible_to<T, std::string>;
+
+	// Level boundaries
+	constexpr LogLevel minLogLevel = LogLevel::Trace;
+	constexpr LogLevel maxLogLevel = LogLevel::Fatal;
 }
 
 // ================================================================================
@@ -78,9 +83,9 @@ do																																						   \
 		GOJO_STATIC_ASSERT(GojoEngine::LoggableMessage<decltype(message)>, "Message should be convertible to std::string or std::string_view!");		   \
 		GOJO_STATIC_ASSERT(GojoEngine::LoggableMessage<decltype(categoryName)>, "Category should be convertible to std::string or std::string_view!");	   \
 																																						   \
-		GojoEngine::Engine::GetInstance().GetLogManager()->LogMessage(	categoryName,																	   \
-																		GojoEngine::LogLevel::logLevel,													   \
-																		std::format(message, ##__VA_ARGS__)												   \
+		GojoEngine::LogManager::GetInstance().LogMessage(	categoryName,																				   \
+															GojoEngine::LogLevel::logLevel,																   \
+															std::format(message, ##__VA_ARGS__)															   \
 		);																																				   \
 	}																																					   \
 } while (0)

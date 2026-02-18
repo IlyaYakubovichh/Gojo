@@ -19,6 +19,7 @@ endfunction()
 include(GNUInstallDirs) 		# makes available install variables
 add_subdirectory(GojoEngine)	# builds GojoEngine
 add_subdirectory(Projects)		# builds all projects that use GojoEngine
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT GraphicsEditor)
 
 # Install
 install(TARGETS GojoEngine 

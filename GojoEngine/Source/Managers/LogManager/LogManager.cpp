@@ -1,49 +1,46 @@
-#include "Managers/LogManager/LogManager.h"
+#include "LogManager.h"
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace GojoEngine
 {
+	// Converter
 	namespace
 	{
-		// Mapping Gojo LogLevel to spdlog level
-		const std::unordered_map<LogLevel, spdlog::level::level_enum> levelMap =
+		spdlog::level::level_enum ToSpdLogLvl(LogLevel level)
 		{
-			{LogLevel::NoLogging,	spdlog::level::off},
-			{LogLevel::Trace,		spdlog::level::trace},
-			{LogLevel::Info,		spdlog::level::info},
-			{LogLevel::Debug,		spdlog::level::debug},
-			{LogLevel::Warning,		spdlog::level::warn},
-			{LogLevel::Error,		spdlog::level::err},
-			{LogLevel::Fatal,		spdlog::level::critical}
-		};
+			switch (level)
+			{
+			case LogLevel::Trace:   return spdlog::level::trace;
+			case LogLevel::Info:    return spdlog::level::info;
+			case LogLevel::Debug:   return spdlog::level::debug;
+			case LogLevel::Warning: return spdlog::level::warn;
+			case LogLevel::Error:   return spdlog::level::err;
+			case LogLevel::Fatal:   return spdlog::level::critical;
+			case LogLevel::Off:     return spdlog::level::off;
+			}
+			return spdlog::level::off;
+		}
 
 		constexpr const char* clogPattern = "[%H:%M:%S.%e] [%^%l%$] %v";
 	}
 
-	// ================================================================================
-	// LogManager Implementation (PIMPL)
-	// ================================================================================
+	// Log manager
 	class LogManager::Impl
 	{
 	public:
-		Impl() = default;
-		~Impl() = default;
-
-		void StartUp()
+		Impl()
 		{
-			// Create a color sink
 			auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-			consoleSink->set_level(spdlog::level::trace);
+			consoleSink->set_pattern(clogPattern);
 
-			// Create a console logger
-			mConsoleLogger = std::make_unique<spdlog::logger>("console", consoleSink);
+			mConsoleLogger = std::make_shared<spdlog::logger>("GojoConsole", consoleSink);
 			mConsoleLogger->set_level(spdlog::level::trace);
 			mConsoleLogger->set_pattern(clogPattern);
 		}
 
-		void ShutDown()
+		~Impl()
 		{
 			if (mConsoleLogger)
 			{
@@ -53,23 +50,16 @@ namespace GojoEngine
 			spdlog::shutdown();
 		}
 
-		void LogMessage(std::string_view categoryName, LogLevel logLevel, std::string_view message) const
+		void LogMessage(std::string_view categoryName, LogLevel level, std::string_view message) const
 		{
-			// If no logging - return
-			if (logLevel == LogLevel::NoLogging || !mConsoleLogger)
-				return;
+			if (!mConsoleLogger) return;
 
-			// Find corresponding spdlog level
-			const auto it = levelMap.find(logLevel);
-			if (it == levelMap.end())
-				return;
+			auto spdLevel = ToSpdLogLvl(level);
 
-			// Log
-			mConsoleLogger->log(it->second, "[{}] {}", categoryName, message);
+			mConsoleLogger->log(spdLevel, "[{}] {}", categoryName, message);
 
-			if (logLevel == LogLevel::Fatal)
+			if (level == LogLevel::Fatal)
 			{
-				// Flush before breaking to ensure the message is visible
 				mConsoleLogger->flush();
 #ifdef GOJO_DEBUG_BUILD
 				GojoDebugBreak();
@@ -78,34 +68,22 @@ namespace GojoEngine
 		}
 
 	private:
-		std::unique_ptr<spdlog::logger> mConsoleLogger;
+		std::shared_ptr<spdlog::logger> mConsoleLogger;
 	};
 
-	// ================================================================================
-	// LogManager Interface
-	// ================================================================================
 	LogManager::LogManager()
-		: pImpl(std::make_unique<LogManager::Impl>())
+		: pImpl(std::make_unique<Impl>())
 	{
+
 	}
 
 	LogManager::~LogManager()
 	{
+		GOJO_LOG_INFO("LogManager", "LogManager ShutDown complete!");
 	}
 
-	void LogManager::StartUp()
+	void LogManager::LogMessage(std::string_view categoryName, LogLevel level, std::string_view message) const
 	{
-		pImpl->StartUp();
+		pImpl->LogMessage(categoryName, level, message);
 	}
-
-	void LogManager::ShutDown()
-	{
-		pImpl->ShutDown();
-	}
-
-	void LogManager::LogMessage(std::string_view categoryName, LogLevel logLevel, std::string_view message) const
-	{
-		pImpl->LogMessage(categoryName, logLevel, message);
-	}
-
 }
