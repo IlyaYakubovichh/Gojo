@@ -5,14 +5,11 @@
 
 namespace GojoEngine
 {
-	class GOJO_API Engine : public NonCopyable
+
+	class GOJO_API Engine final : public NonCopyable
 	{
 	public:
-		static Engine& GetInstance()
-		{
-			static Engine engine;
-			return engine;
-		}
+		static Engine& GetInstance();
 
 		static void StartUp();
 		static void Run();
@@ -22,4 +19,5 @@ namespace GojoEngine
 		Engine() = default;
 		~Engine() = default;
 	};
+
 }

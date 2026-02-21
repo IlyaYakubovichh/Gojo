@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Managers/WindowManager/Window.h"
+#include "Managers/WindowManager/Window/Window.h"
 #include "Managers/Manager.h"	
 #include <unordered_map>
 #include <memory>
@@ -8,24 +8,33 @@
 
 namespace GojoEngine
 {
+
+	// ====================================================================================================
+	// Error types during setup
+	// ====================================================================================================
+
 	enum class WindowError
 	{
 		ManagerIsNotInitialized,
 		CreationFailed
 	};
 
+	// ====================================================================================================
+	// Window manager
+	// ====================================================================================================
+
 	class GOJO_API WindowManager final : public Manager<WindowManager>
 	{
 		friend class Manager<WindowManager>;
 
 	public:
-		std::expected<WindowId, WindowError> CreateWindow(const WindowSettings& settings);
+		[[nodiscard]] std::expected<WindowId, WindowError> CreateWindow(const WindowSettings& settings);
+		[[nodiscard]] std::shared_ptr<Window> GetWindowById(WindowId id) const;
+		[[nodiscard]] bool AreAllWindowsClosed() const;
+
 		void OnUpdate();
 		void CloseAllWindows();
 		void CleanupClosedWindows();
-		b8 AreAllWindowsClosed();
-
-		std::shared_ptr<Window> GetWindowById(WindowId id) const;
 
 	private:
 		WindowManager();
@@ -33,8 +42,8 @@ namespace GojoEngine
 
 	private:
 		std::unordered_map<WindowId, std::shared_ptr<Window>> mWindows;
-
-		b8 mInitialized{ false };
-		u16 mWindowCounter{ 0 };
+		bool mInitialized{ false };
+		uint16_t mWindowCounter{ 0 };
 	};
+
 }

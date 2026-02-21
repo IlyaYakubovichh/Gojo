@@ -5,7 +5,9 @@
 
 namespace GojoEngine
 {
-	// Converter
+	// ====================================================================================================
+	// Internal Helpers
+	// ====================================================================================================
 	namespace
 	{
 		spdlog::level::level_enum ToSpdLogLvl(LogLevel level)
@@ -23,21 +25,24 @@ namespace GojoEngine
 			return spdlog::level::off;
 		}
 
-		constexpr const char* clogPattern = "[%H:%M:%S.%e] [%^%l%$] %v";
+		constexpr const char* cLogPattern = "[%H:%M:%S.%e] [%^%l%$] %v";
 	}
 
-	// Log manager
+	// ====================================================================================================
+	// LogManager Implementation (PIMPL)
+	// ====================================================================================================
+
 	class LogManager::Impl
 	{
 	public:
 		Impl()
 		{
 			auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-			consoleSink->set_pattern(clogPattern);
+			consoleSink->set_pattern(cLogPattern);
 
 			mConsoleLogger = std::make_shared<spdlog::logger>("GojoConsole", consoleSink);
 			mConsoleLogger->set_level(spdlog::level::trace);
-			mConsoleLogger->set_pattern(clogPattern);
+			mConsoleLogger->set_pattern(cLogPattern);
 		}
 
 		~Impl()
@@ -54,8 +59,7 @@ namespace GojoEngine
 		{
 			if (!mConsoleLogger) return;
 
-			auto spdLevel = ToSpdLogLvl(level);
-
+			const auto spdLevel = ToSpdLogLvl(level);
 			mConsoleLogger->log(spdLevel, "[{}] {}", categoryName, message);
 
 			if (level == LogLevel::Fatal)
@@ -71,19 +75,22 @@ namespace GojoEngine
 		std::shared_ptr<spdlog::logger> mConsoleLogger;
 	};
 
-	LogManager::LogManager()
-		: pImpl(std::make_unique<Impl>())
-	{
+	// ====================================================================================================
+	// LogManager Public API
+	// ====================================================================================================
 
+	LogManager::LogManager()
+		: mImpl(std::make_unique<Impl>())
+	{
 	}
 
 	LogManager::~LogManager()
 	{
-		GOJO_LOG_INFO("LogManager", "LogManager ShutDown complete!");
+		GOJO_LOG_INFO("LogManager", "ShutDown complete!");
 	}
 
 	void LogManager::LogMessage(std::string_view categoryName, LogLevel level, std::string_view message) const
 	{
-		pImpl->LogMessage(categoryName, level, message);
+		mImpl->LogMessage(categoryName, level, message);
 	}
 }

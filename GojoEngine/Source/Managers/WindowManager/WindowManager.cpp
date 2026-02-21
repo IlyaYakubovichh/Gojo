@@ -5,9 +5,13 @@
 
 namespace GojoEngine
 {
+	// ====================================================================================================
+	// Public API
+	// ====================================================================================================
+
 	std::expected<WindowId, WindowError> WindowManager::CreateWindow(const WindowSettings& settings)
 	{
-		GOJO_ASSERT_MESSAGE((settings.Width > 0) && (settings.Height > 0), "Window width and height must be > 0!");
+		GOJO_ASSERT_MESSAGE((settings.Width > 0) && (settings.Height > 0), "Window dimensions must be > 0!");
 
 		if (!mInitialized)
 		{
@@ -15,25 +19,25 @@ namespace GojoEngine
 			return std::unexpected(WindowError::ManagerIsNotInitialized);
 		}
 
-		auto window = std::make_shared<Window>(settings);
+		const WindowId id( ++mWindowCounter );
+
+		auto window = std::make_shared<Window>(id, settings);
 		if (!window->IsValid())
 		{
 			GOJO_LOG_ERROR("WindowManager", "Window creation failed for '{}'", settings.Title);
 			return std::unexpected(WindowError::CreationFailed);
 		}
 
-		const WindowId id( ++mWindowCounter );
 		mWindows[id] = window;
 
-		GOJO_LOG_INFO("WindowManager", "Window '{}' created with id={}", settings.Title, id.mId);
+		GOJO_LOG_INFO("WindowManager", "Window '{}' created with ID: {}", settings.Title, id.mId);
 
 		return id;
 	}
 
 	void WindowManager::OnUpdate()
 	{
-		if (!mInitialized)
-			return;
+		if (!mInitialized) return;
 
 		glfwPollEvents();
 		CleanupClosedWindows();
@@ -41,17 +45,15 @@ namespace GojoEngine
 
 	void WindowManager::CleanupClosedWindows()
 	{
-		auto it = mWindows.begin();
-		while (it != mWindows.end())
-		{
-			if (it->second->ShouldClose())
+		std::erase_if(mWindows, [](const auto& pair)
 			{
-				GOJO_LOG_INFO("WindowManager", "Erased '{}' window!", it->second->GetTitle());
-				it = mWindows.erase(it);
-				continue;
-			}
-			++it;
-		}
+				if (pair.second->ShouldClose())
+				{
+					GOJO_LOG_INFO("WindowManager", "Erased '{}' window!", pair.second->GetTitle());
+					return true;
+				}
+				return false;
+			});
 	}
 
 	void WindowManager::CloseAllWindows()
@@ -65,37 +67,42 @@ namespace GojoEngine
 		}
 	}
 
-	b8 WindowManager::AreAllWindowsClosed()
+	bool WindowManager::AreAllWindowsClosed() const
 	{
 		return mWindows.empty();
 	}
 
 	std::shared_ptr<Window> WindowManager::GetWindowById(WindowId id) const
 	{
-		auto it = mWindows.find(id);
-		if (it != mWindows.end())
+		if (auto it = mWindows.find(id); it != mWindows.end())
+		{
 			return it->second;
+		}
 
-		GOJO_LOG_WARNING("WindowManager", "Requested window with invalid id={}", id.mId);
-
+		GOJO_LOG_WARNING("WindowManager", "Requested window with invalid ID: {}", id.mId);
 		return nullptr;
 	}
+
+	// ====================================================================================================
+	// Constructor / Destructor
+	// ====================================================================================================
 
 	WindowManager::WindowManager()
 	{
 		glfwSetErrorCallback([](int errorCode, const char* description)
 			{
-				GOJO_LOG_ERROR("GLFW", "GLFW Error [{}]: {}", errorCode, description);
+				GOJO_LOG_ERROR("GLFW", "Error [{}]: {}", errorCode, description);
 			});
 
 		if (!glfwInit())
 		{
-			GOJO_LOG_ERROR("GLFW", "GLFW initialization failed!");
+			GOJO_LOG_FATAL("GLFW", "Initialization failed!");
 			return;
 		}
 
+		// Basic generic hints
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 		mInitialized = true;
 	}
@@ -104,7 +111,6 @@ namespace GojoEngine
 	{
 		CloseAllWindows();
 		CleanupClosedWindows();
-
 		mWindows.clear();
 
 		if (mInitialized)
@@ -113,6 +119,6 @@ namespace GojoEngine
 			mInitialized = false;
 		}
 
-		GOJO_LOG_INFO("WindowManager", "WindowManager ShutDown complete!");
+		GOJO_LOG_INFO("WindowManager", "ShutDown complete!");
 	}
 }
