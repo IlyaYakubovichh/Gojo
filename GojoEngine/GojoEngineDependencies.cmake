@@ -32,7 +32,37 @@ target_link_libraries(GojoEngine PUBLIC
 
 
 # ------------------------------------
+# Vulkan library
+# ------------------------------------
+find_package(Vulkan REQUIRED COMPONENTS shaderc_combined)
+message(STATUS "Vulkan found: ${Vulkan_FOUND}")
+message(STATUS "Vulkan include dirs: ${Vulkan_INCLUDE_DIRS}")
+message(STATUS "Vulkan library: ${Vulkan_LIBRARY}")
+message(STATUS "Vulkan volk library: ${Vulkan_volk_LIBRARY}")
+message(STATUS "Vulkan shaderc_combined library: ${Vulkan_shaderc_combined_LIBRARY}")
+target_link_options(GojoEngine INTERFACE LINKER:/IGNORE:4099)
+target_link_libraries(GojoEngine PUBLIC 
+	Vulkan::Vulkan
+	Vulkan::shaderc_combined
+)
+
+
+# ------------------------------------
+# vk-bootstrap library via FetchContent
+# ------------------------------------
+FetchContent_Declare(
+  vkbootstrap
+  URL https://github.com/charles-lunarg/vk-bootstrap/archive/refs/tags/v1.4.330.tar.gz
+)
+FetchContent_MakeAvailable(vkbootstrap)
+target_link_libraries(GojoEngine PUBLIC 
+	vk-bootstrap::vk-bootstrap
+)
+
+
+# ------------------------------------
 # Finish
 # ------------------------------------
 GojoSensei(spdlog GojoEngine/GojoEngineDependencies)
 GojoSensei(glfw GojoEngine/GojoEngineDependencies)
+GojoSensei(vk-bootstrap GojoEngine/GojoEngineDependencies)

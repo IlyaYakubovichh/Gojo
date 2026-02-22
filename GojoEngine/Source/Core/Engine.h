@@ -2,6 +2,9 @@
 
 #include "Utility.h"
 #include "Core/Macros.h"
+#include "Platform/Vulkan/VulkanGraphicsContext.h"
+
+#include <memory>
 
 namespace GojoEngine
 {

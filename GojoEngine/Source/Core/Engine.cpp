@@ -4,8 +4,12 @@
 #include "Managers/EventManager/EventManager.h"
 #include "Managers/EventManager/Events/WindowEvents.h"
 
+#include "Platform/Vulkan/VulkanGraphicsContext.h"
+
 namespace GojoEngine
 {
+
+	std::shared_ptr<VulkanGraphicsContext> mContext;
 
 	Engine& Engine::GetInstance()
 	{
@@ -18,6 +22,9 @@ namespace GojoEngine
 		LogManager::StartUp();		GOJO_LOG_INFO("Engine", "LogManager StartUp complete!");
 		WindowManager::StartUp();	GOJO_LOG_INFO("Engine", "WindowManager StartUp complete!");
 		EventManager::StartUp();	GOJO_LOG_INFO("Engine", "EventManager StartUp complete!");
+
+		mContext = std::make_shared<VulkanGraphicsContext>();
+		mContext->StartUp();
 
 		GOJO_LOG_INFO("Engine", "Engine StartUp complete!");
 	}
@@ -36,6 +43,8 @@ namespace GojoEngine
 	void Engine::ShutDown()
 	{
 		GOJO_LOG_INFO("Engine", "Engine ShutDown...");
+
+		mContext->ShutDown();
 
 		EventManager::ShutDown();
 		WindowManager::ShutDown();

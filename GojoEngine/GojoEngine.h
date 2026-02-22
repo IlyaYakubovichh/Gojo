@@ -13,3 +13,6 @@
 #include "Managers/EventManager/Events/KeyboardEvents.h"
 #include "Managers/EventManager/Events/MouseEvents.h"
 #include "Managers/EventManager/Events/WindowEvents.h"
+
+// Vulkan
+#include "Platform/Vulkan/VulkanGraphicsContext.h"
